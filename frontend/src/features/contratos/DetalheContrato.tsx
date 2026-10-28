@@ -2,9 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Download, Printer } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Cronograma, IndicadoresCards } from "../../components/Financeiro";
-import { Modal } from "../../components/Modal";
-import { Button } from "../../components/ui/button";
+import {
+  Cronograma,
+  IndicadoresCards,
+} from "../../components/organisms/Financeiro";
+import { Modal } from "../../components/molecules/Modal";
+import { Button } from "../../components/atoms/Button";
 import { api, baixar } from "../../services/api";
 import type {
   Antecipacao,
@@ -15,7 +18,7 @@ import type {
 } from "../../types";
 import { data, dinheiro, hoje, statusLabel } from "../../utils/format";
 
-import { Carregando, Erro, Vazio } from "../../components/Feedback";
+import { Carregando, Erro, Vazio } from "../../components/molecules/Feedback";
 function DetalheContrato() {
   const { id } = useParams();
   const q = useQueryClient();

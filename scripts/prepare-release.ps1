@@ -40,7 +40,7 @@ try {
     }
 } finally {$taskZip.Dispose();$taskZipStream.Dispose()}
 Move-Item -LiteralPath $taskTemporaryZip -Destination (Join-Path $taskOutput $taskSourceName) -Force
-$taskSums = @($taskName,($taskName+'.sig'),'latest.json',$taskSourceName) | ForEach-Object {((Get-FileHash -LiteralPath (Join-Path $taskOutput $_)).Hash.ToLower()+'  '+$_)}
+$taskSums = @($taskName,($taskName+'.sig'),'latest.json') | ForEach-Object {((Get-FileHash -LiteralPath (Join-Path $taskOutput $_)).Hash.ToLower()+'  '+$_)}
 [IO.File]::WriteAllLines((Join-Path $taskOutput 'SHA256SUMS.txt'),[string[]]$taskSums)
 & node (Join-Path $PSScriptRoot 'verify-release.mjs')
 if($LASTEXITCODE -ne 0){throw 'A assinatura da release não passou na verificação.'}

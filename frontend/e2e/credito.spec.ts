@@ -11,10 +11,10 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
     .getByLabel("Nome", { exact: true })
     .fill("Cliente de teste isolado");
   await page.getByRole("button", { name: "Salvar cliente" }).click();
+  await expect(page).toHaveURL(/#\/simulador\?cliente=/);
   await expect(
-    page.getByRole("link", { name: "Cliente de teste isolado" }),
+    page.getByRole("heading", { name: "Simular crédito" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Simulador", exact: true }).click();
   await page.getByLabel("Valor do empréstimo").fill("1000");
   await page.getByLabel("Taxa mensal").fill("3");
   await page.getByLabel("Número de parcelas").fill("2");
@@ -22,9 +22,9 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
   await expect(
     page.getByRole("heading", { name: "Resultado da simulação" }),
   ).toBeVisible();
-  await page
-    .getByLabel("Cliente responsável")
-    .selectOption({ label: "Cliente de teste isolado" });
+  await expect(
+    page.getByLabel("Cliente responsável").locator("option:checked"),
+  ).toHaveText("Cliente de teste isolado");
   await page
     .getByRole("button", { name: "Confirmar contrato", exact: true })
     .click();
@@ -59,6 +59,27 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
   expect(pdf.suggestedFilename()).toMatch(/extrato.*\.pdf/);
   await pdf.saveAs("../.dev/e2e-extrato.pdf");
   await page.screenshot({ path: "../.dev/e2e-contrato.png", fullPage: true });
+  await page.getByRole('navigation',{name:'Menu principal'}).getByRole("link", { name: "Contratos", exact: true }).click();
+  const linha = page
+    .locator(".contract-row")
+    .filter({ hasText: "Cliente de teste isolado" });
+  await expect(linha).toHaveCount(1);
+  const codigo = (await linha.getAttribute("href"))!.split("/").pop()!;
+  await page.getByRole("searchbox", { name: "Pesquisar contratos", exact: true }).fill("TESTE ISOLADO fixa");
+  await expect(linha).toBeVisible();
+  await linha.hover();
+  await expect(linha).toHaveCSS("background-color", "rgb(242, 245, 252)");
+  await page.getByRole("searchbox", { name: "Pesquisar contratos", exact: true }).fill(codigo.slice(0, 8));
+  await expect(linha).toBeVisible();
+  await page.getByRole("searchbox", { name: "Pesquisar contratos", exact: true }).fill("contrato inexistente");
+  await expect(
+    page.getByText("Nenhum contrato encontrado para esta pesquisa."),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Limpar pesquisar contratos" })
+    .click();
+  await expect(linha).toBeVisible();
+  await page.screenshot({ path: "../.dev/e2e-carteira.png", fullPage: true });
   await page.getByRole("link", { name: "Dados e segurança" }).click();
   const backupPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Exportar backup" }).click();
@@ -68,6 +89,8 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
   await page.getByRole("button", { name: "Novo cliente", exact: true }).click();
   await page.getByLabel("Nome", { exact: true }).fill("Cliente após backup");
   await page.getByRole("button", { name: "Salvar cliente" }).click();
+  await expect(page).toHaveURL(/#\/simulador\?cliente=/);
+  await page.getByRole("link", { name: "Clientes", exact: true }).click();
   await expect(
     page.getByRole("link", { name: "Cliente após backup" }),
   ).toBeVisible();

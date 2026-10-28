@@ -1,5 +1,5 @@
 export const identidade = {
   titulo: "Gestão de Crédito",
   subtitulo: "Administração de operações",
-  versao: "0.2.0",
+  versao: "0.3.0",
 };

@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../atoms/Button";
 export function Modal({
   title,
   onClose,

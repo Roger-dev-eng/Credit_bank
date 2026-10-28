@@ -1,6 +1,117 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+:root {
+  --interactive-hover: #f2f5fc;
+  --interactive-focus: #dce4f5;
+  --transition-interactive: 160ms ease;
+}
+.contract-row {
+  gap: 16px;
+  border-radius: 10px;
+  transition:
+    background-color var(--transition-interactive),
+    box-shadow var(--transition-interactive);
+}
+.contract-row:hover,
+.contract-row:focus-visible {
+  background: var(--interactive-hover);
+  box-shadow: inset 3px 0 0 #a9bce0;
+}
+.contract-row:focus-visible,
+.client-identity:focus-visible {
+  outline: 2px solid #3e5c9a;
+  outline-offset: 3px;
+}
+.contract-main {
+  flex: 1;
+  min-width: 0;
+}
+.contract-client {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #293e69;
+}
+.contract-reference {
+  overflow-wrap: anywhere;
+}
+.contract-chevron {
+  color: #8c9ab1;
+  transition: color var(--transition-interactive);
+}
+.contract-row:hover .contract-chevron {
+  color: #3e5c9a;
+}
+.contract-search {
+  margin-bottom: 18px;
+}
+.contract-search .muted {
+  margin: 9px 0 0;
+}
+.search-field {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #dfe4ed;
+  border-radius: 9px;
+  padding: 0 12px;
+  color: #8090aa;
+}
+.search-field:focus-within {
+  border-color: #3e5c9a;
+  box-shadow: 0 0 0 2px #3e5c9a16;
+}
+.search-field input {
+  border: 0;
+  background: transparent;
+  padding-left: 0;
+  min-width: 0;
+}
+.search-field input:focus {
+  outline: none;
+}
+.search-field input::-webkit-search-cancel-button {
+  display: none;
+}
+.search-clear {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border-radius: 6px;
+}
+.search-clear:hover {
+  background: var(--interactive-hover);
+  color: #293e69;
+}
+.client-identity {
+  flex: 1;
+  border-radius: 8px;
+  padding: 10px;
+  transition: background-color var(--transition-interactive);
+}
+.client-identity:hover {
+  background: var(--interactive-hover);
+}
+.back,
+.segmented button,
+nav a {
+  transition:
+    background-color var(--transition-interactive),
+    color var(--transition-interactive);
+}
+.back {
+  width: max-content;
+  padding: 6px 8px;
+  border-radius: 7px;
+}
+.back:hover,
+.segmented button:not(.selected):hover {
+  background: #e1e8f5;
+  color: #293e69;
+}
 .update-notice {
   display: flex;
   justify-content: space-between;
@@ -690,3 +801,30 @@ dialog p {
     padding: 7px;
   }
 }
+
+.contract-row {
+  padding: 20px 16px;
+}
+.contract-balance {
+  text-align: right;
+  flex-shrink: 0;
+}
+.contract-client strong {
+  font-size: 15px;
+}
+.contract-reference {
+  line-height: 1.7;
+}
+@media (max-width: 700px) {
+  .contract-row {
+    gap: 10px;
+    padding: 18px 10px;
+  }
+  .contract-balance strong {
+    font-size: 13px;
+  }
+  .contract-client strong {
+    font-size: 13px;
+  }
+}
+.simulation-client{margin:0 0 18px;padding:12px 16px;background:#fff;border:1px solid #dce4f5;border-left:3px solid #7b98cf;border-radius:9px;font-size:13px;color:#536585}.simulation-client strong{color:#293e69}

@@ -1,18 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calculator } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import { Cronograma } from "../../components/Financeiro";
-import { Modal } from "../../components/Modal";
-import { Button } from "../../components/ui/button";
+import { Cronograma } from "../../components/organisms/Financeiro";
+import { Modal } from "../../components/molecules/Modal";
+import { Button } from "../../components/atoms/Button";
 import { api } from "../../services/api";
 import type { Cliente, Entrada, Extrato, Simulacao } from "../../types";
 import { dinheiro, hoje } from "../../utils/format";
 
-import { Erro } from "../../components/Feedback";
+import { Erro } from "../../components/molecules/Feedback";
 const simulacaoSchema = z.object({
   modalidade: z.enum(["PARCELA_FIXA", "SO_JUROS"]),
   principal: z.coerce.number().positive().max(1000000000),
@@ -28,10 +28,13 @@ type SimForm = z.infer<typeof simulacaoSchema>;
 function Simulador() {
   const nav = useNavigate();
   const q = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const clienteDaRota = searchParams.get("cliente") || "";
   const [porParcela, setPorParcela] = useState(false);
-  const [cliente, setCliente] = useState(
-    new URLSearchParams(location.hash.split("?")[1]).get("cliente") || "",
-  );
+  const [cliente, setCliente] = useState(clienteDaRota);
+  useEffect(() => {
+    setCliente(clienteDaRota);
+  }, [clienteDaRota]);
   const [confirmar, setConfirmar] = useState(false);
   const cs = useQuery({
     queryKey: ["clientes", ""],
@@ -85,6 +88,15 @@ function Simulador() {
           </p>
         </div>
       </div>
+      {cliente && (
+        <p className="simulation-client" role="status">
+          Cliente selecionado:{" "}
+          <strong>
+            {cs.data?.find((c) => c.id === cliente)?.nome ||
+              "Carregando cliente…"}
+          </strong>
+        </p>
+      )}
       <section className="card">
         <div className="segmented">
           {(["PARCELA_FIXA", "SO_JUROS"] as const).map((m) => (

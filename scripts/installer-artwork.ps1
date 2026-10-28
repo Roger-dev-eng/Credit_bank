@@ -21,15 +21,20 @@ function New-InstallerBitmap([int]$Width, [int]$Height, [string]$Name, [scriptbl
 $taskIconBitmap = [Drawing.Bitmap]::new($taskIconPath)
 $taskMuted = [Drawing.SolidBrush]::new([Drawing.ColorTranslator]::FromHtml('#B9C8E3'))
 $taskInk = [Drawing.SolidBrush]::new([Drawing.ColorTranslator]::FromHtml('#1A2035'))
-$taskLabel = [Drawing.Font]::new('Segoe UI', 11, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Pixel)
+$taskLabel = [Drawing.Font]::new('Segoe UI', 13, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Pixel)
 $taskHeaderFont = [Drawing.Font]::new('Segoe UI', 12, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Pixel)
 try {
     New-InstallerBitmap 164 314 'sidebar.bmp' {
         param($g)
         $taskGradient = [Drawing.Drawing2D.LinearGradientBrush]::new([Drawing.Point]::new(0,0), [Drawing.Point]::new(164,314), [Drawing.ColorTranslator]::FromHtml('#1A2035'), [Drawing.ColorTranslator]::FromHtml('#2E4673'))
         $g.FillRectangle($taskGradient, 0, 0, 164, 314); $taskGradient.Dispose()
-        $g.DrawString('INSTALAÇÃO', $taskLabel, $taskMuted, 24, 28)
-        $g.DrawImage($taskIconBitmap, 24, 66, 80, 80)
+        $taskTextSize = $g.MeasureString('INSTALAÇÃO', $taskLabel)
+        $taskIconSize = 96
+        $taskGap = 20
+        $taskGroupHeight = $taskTextSize.Height + $taskGap + $taskIconSize
+        $taskTop = (314 - $taskGroupHeight) / 2
+        $g.DrawString('INSTALAÇÃO', $taskLabel, $taskMuted, [single]((164 - $taskTextSize.Width) / 2), [single]$taskTop)
+        $g.DrawImage($taskIconBitmap, [single]((164 - $taskIconSize) / 2), [single]($taskTop + $taskTextSize.Height + $taskGap), [single]$taskIconSize, [single]$taskIconSize)
     }
     New-InstallerBitmap 150 57 'header.bmp' {
         param($g)

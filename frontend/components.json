@@ -12,6 +12,6 @@
   "aliases": {
     "components": "./src/components",
     "utils": "./src/utils/cn",
-    "ui": "./src/components/ui"
+    "ui": "./src/components/atoms"
   }
 }

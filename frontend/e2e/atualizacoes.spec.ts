@@ -33,8 +33,8 @@ async function nativeMock(
               throw "Não foi possível consultar as atualizações. Verifique sua internet.";
             return {
               available: mode === "available",
-              currentVersion: "0.2.0",
-              version: "0.3.0",
+              currentVersion: "0.3.0",
+              version: "0.4.0",
               notes: "Melhorias de teste",
             };
           }
@@ -53,14 +53,14 @@ async function nativeMock(
     },
     { mode },
   );
-  await page.goto("/#/configuracoes");
+  await page.goto("/#/atualizacoes");
 }
 test("atualização exige confirmação e informa falha sem declarar sucesso", async ({
   page,
 }) => {
   await nativeMock(page, "available");
   await page.getByRole("button", { name: "Verificar atualizações" }).click();
-  await expect(page.getByText("Nova versão 0.3.0 disponível.")).toBeVisible();
+  await expect(page.getByText("Nova versão 0.4.0 disponível.")).toBeVisible();
   await page.getByRole("button", { name: "Atualizar agora" }).click();
   await expect(
     page.getByText("Seu banco de dados será preservado.", { exact: false }),

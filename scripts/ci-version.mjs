@@ -1,0 +1,13 @@
+import {readFileSync,existsSync,appendFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const read=p=>readFileSync(p,'utf8');
+const version=JSON.parse(read('desktop/src-tauri/tauri.conf.json')).version;
+assert.match(version,/^\d+\.\d+\.\d+$/,'Utilize uma versão estável no formato x.y.z.');
+for(const p of ['desktop/package.json','frontend/package.json','desktop/package-lock.json','frontend/package-lock.json'])assert.equal(JSON.parse(read(p)).version,version,p+' tem versão diferente.');
+const cargo=read('desktop/src-tauri/Cargo.toml').match(/\[package\][\s\S]*?version\s*=\s*"([^"]+)"/)[1];
+assert.equal(cargo,version,'Cargo.toml tem versão diferente.');
+assert.ok(read('frontend/src/config.ts').includes(`versao: "${version}"`),'Versão da interface diferente.');
+assert.ok(existsSync(`docs/releases/${version}.md`),'Notas da versão ausentes.');
+if(process.env.GITHUB_REF_TYPE==='tag')assert.equal(process.env.GITHUB_REF_NAME,'v'+version,'A tag deve corresponder à versão do aplicativo.');
+if(process.env.GITHUB_OUTPUT)appendFileSync(process.env.GITHUB_OUTPUT,`version=${version}\n`);
+console.log('Versão validada: '+version);

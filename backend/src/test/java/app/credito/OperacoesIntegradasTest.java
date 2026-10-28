@@ -30,6 +30,13 @@ import org.springframework.test.web.servlet.MockMvc;
 )
 @AutoConfigureMockMvc
 class OperacoesIntegradasTest {
+  @Test void contratoIdentificaClienteERefleteNomeAtualizado() {
+    var e=novo();
+    assertThat(e.contrato().get("cliente_nome")).isEqualTo("Integração");
+    String clienteId=e.contrato().get("cliente_id").toString();
+    clientes.salvar(clienteId,new ClienteService.Entrada("Nome atualizado",null,null));
+    assertThat(contratos.extrato(e.contrato().get("id").toString()).contrato().get("cliente_nome")).isEqualTo("Nome atualizado");
+  }
 
   @Test
   void atualizacaoProtegeBancoEBloqueiaNovosLancamentos() throws Exception {

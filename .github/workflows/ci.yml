@@ -1,0 +1,53 @@
+name: Testes
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  tests:
+    name: Java, React e navegador (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Testar e empacotar backend
+        run: mvn -B -ntp -f backend/pom.xml package
+      - name: Instalar dependências frontend
+        run: npm --prefix frontend ci
+      - name: Compilar React e TypeScript
+        run: npm --prefix frontend run build
+      - name: Preparar Edge
+        working-directory: frontend
+        run: npx playwright install msedge
+      - name: Testar fluxos de interface
+        run: npm --prefix frontend run test:e2e
+      - name: Guardar relatórios de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            backend/target/surefire-reports/
+            .dev/playwright/
+          include-hidden-files: true
+          retention-days: 7

@@ -1,75 +1,75 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "../../components/ui/button";
+import { Button } from "../../components/atoms/Button";
+import { PageHeading } from "../../components/molecules/PageHeading";
+import { SearchField } from "../../components/molecules/SearchField";
+import { ListaContratos } from "../../components/organisms/ContractList";
+import { Carregando, Erro } from "../../components/molecules/Feedback";
 import { api } from "../../services/api";
 import type { Extrato } from "../../types";
-import { dinheiro, statusLabel } from "../../utils/format";
-
-import { Carregando, Erro, Vazio } from "../../components/Feedback";
-function Carteira() {
+import { statusLabel } from "../../utils/format";
+const normalizar = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("pt-BR");
+export function Carteira() {
+  const [busca, setBusca] = useState("");
   const contratos = useQuery({
     queryKey: ["contratos"],
     queryFn: () => api<Extrato[]>("/api/contratos"),
   });
+  const termos = normalizar(busca).trim().split(/\s+/).filter(Boolean);
+  const filtrados = (contratos.data || []).filter((c) => {
+    const texto = normalizar(
+      [
+        c.contrato.cliente_nome || "",
+        c.contrato.cliente_id,
+        c.contrato.id,
+        c.contrato.modalidade.replaceAll("_", " "),
+        statusLabel[c.status] || c.status,
+      ].join(" "),
+    );
+    return termos.every((termo) => texto.includes(termo));
+  });
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">ACOMPANHAMENTO</span>
-          <h1>Contratos</h1>
-          <p className="muted">Operações confirmadas e seus saldos atuais.</p>
-        </div>
-        <Button asChild>
-          <Link to="/simulador">
-            <Plus size={16} />
-            Simular operação
-          </Link>
-        </Button>
+      <PageHeading
+        title="Contratos"
+        eyebrow="ACOMPANHAMENTO"
+        description="Operações confirmadas e seus saldos atuais."
+        actions={
+          <Button asChild>
+            <Link to="/simulador">
+              <Plus size={16} />
+              Simular operação
+            </Link>
+          </Button>
+        }
+      />
+      <div className="contract-search">
+        <SearchField
+          label="Pesquisar contratos"
+          placeholder="Nome do cliente, identificador, modalidade ou status…"
+          value={busca}
+          onChange={setBusca}
+        />
+        {contratos.data && (
+          <p role="status" className="muted">
+            {filtrados.length} de {contratos.data.length} contrato(s)
+          </p>
+        )}
       </div>
       <Erro error={contratos.error} />
-      {contratos.isPending && <Carregando />}
-      <ListaContratos contratos={contratos.data || []} />
+      {contratos.isPending ? (
+        <Carregando />
+      ) : (
+        !contratos.error && (
+          <ListaContratos contratos={filtrados} filtrando={termos.length > 0} />
+        )
+      )}
     </>
   );
 }
-function ListaContratos({ contratos }: { contratos: Extrato[] }) {
-  return (
-    <section className="card">
-      {contratos.length === 0 ? (
-        <Vazio>Nenhum contrato confirmado.</Vazio>
-      ) : (
-        <div className="contract-list">
-          {contratos.map((c) => (
-            <Link
-              className="contract-row"
-              key={c.contrato.id}
-              to={"/contratos/" + c.contrato.id}
-            >
-              <div>
-                <span className="eyebrow">
-                  {c.contrato.modalidade === "PARCELA_FIXA"
-                    ? "PARCELA FIXA"
-                    : "SÓ JUROS"}
-                </span>
-                <strong>Contrato {c.contrato.id.slice(0, 8)}</strong>
-                <small>
-                  {c.contrato.prazo} meses · {c.contrato.taxa}% a.m.
-                </small>
-              </div>
-              <div>
-                <small>Saldo pendente</small>
-                <strong>{dinheiro(c.indicadores.saldo)}</strong>
-                <span className={"badge " + c.status}>
-                  {statusLabel[c.status]}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-export { Carteira, ListaContratos };

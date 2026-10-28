@@ -3,16 +3,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { Modal } from "../../components/Modal";
-import { Button } from "../../components/ui/button";
+import { Modal } from "../../components/molecules/Modal";
+import { Button } from "../../components/atoms/Button";
 import { api } from "../../services/api";
 import type { Cliente, Extrato } from "../../types";
 import { dinheiro } from "../../utils/format";
 
-import { Carregando, Erro, Vazio } from "../../components/Feedback";
-import { ListaContratos } from "../contratos/Carteira";
+import { Carregando, Erro, Vazio } from "../../components/molecules/Feedback";
+import { ListaContratos } from "../../components/organisms/ContractList";
 const clienteSchema = z.object({
   nome: z.string().trim().min(1, "Informe o nome.").max(150),
   telefone: z.string().max(40),
@@ -67,7 +67,7 @@ function Clientes() {
           {clientes.data?.map((c) => (
             <article className="client-row" key={c.id}>
               <div className="avatar">{c.nome.slice(0, 2).toUpperCase()}</div>
-              <Link to={"/clientes/" + c.id}>
+              <Link className="client-identity" to={"/clientes/" + c.id}>
                 <strong>{c.nome}</strong>
                 <small>{c.telefone || "Sem telefone informado"}</small>
               </Link>
@@ -123,6 +123,7 @@ function ClienteEditor({
   cliente: Cliente | null;
   onClose: () => void;
 }) {
+  const navigate = useNavigate();
   const q = useQueryClient();
   const form = useForm<ClienteForm>({
     resolver: zodResolver(clienteSchema),
@@ -134,15 +135,17 @@ function ClienteEditor({
   });
   const salvar = useMutation({
     mutationFn: (v: ClienteForm) =>
-      api(
+      api<Cliente>(
         "/api/clientes" + (cliente ? "/" + cliente.id : ""),
         cliente ? "PUT" : "POST",
         v,
       ),
-    onSuccess: () => {
+    onSuccess: (salvo) => {
       q.invalidateQueries({ queryKey: ["clientes"] });
       q.invalidateQueries({ queryKey: ["cliente"] });
       onClose();
+      if (!cliente)
+        navigate("/simulador?cliente=" + encodeURIComponent(salvo.id));
     },
   });
   return (

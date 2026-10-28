@@ -1,0 +1,115 @@
+name: Versão Windows
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Criar release rascunho (requer versão inédita)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: windows-release
+  cancel-in-progress: false
+jobs:
+  validate:
+    name: Validar versão
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Conferir versões e notas
+        id: version
+        run: node scripts/ci-version.mjs
+  tests:
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+  build:
+    name: Compilar, assinar e verificar
+    needs: [validate, tests]
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Preparar Rust
+        run: |
+          rustup default stable
+          rustup target add x86_64-pc-windows-msvc
+      - name: Compilar e assinar instalador
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: ./scripts/build-windows.ps1 -SkipBackendTests
+      - name: Validar runtime incluído
+        run: node scripts/runtime-smoke.mjs
+      - name: Guardar somente arquivos públicos da atualização
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            dist/windows/*-x64-instalador.exe
+            dist/windows/*-x64-instalador.exe.sig
+            dist/windows/latest.json
+            dist/windows/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+  publish:
+    name: Publicar no GitHub Releases
+    if: github.event_name == 'push' || inputs.publish_release
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: ${{ needs.validate.outputs.version }}
+      DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: dist/windows
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verificar assinatura novamente antes de publicar
+        run: node scripts/verify-release.mjs
+      - name: Criar release rascunho com arquivos assinados
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "A release $TAG já existe. Incremente a versão; pacotes publicados não são substituídos." >&2
+            exit 1
+          fi
+          gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "Gestão de Crédito $VERSION" --notes-file "docs/releases/$VERSION.md" dist/windows/*-x64-instalador.exe dist/windows/*-x64-instalador.exe.sig dist/windows/latest.json dist/windows/SHA256SUMS.txt
+          if [ "$DISPATCH" != "true" ]; then
+            gh release edit "$TAG" --draft=false --latest
+          fi

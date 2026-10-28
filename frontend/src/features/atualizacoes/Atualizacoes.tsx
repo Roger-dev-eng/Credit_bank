@@ -10,8 +10,8 @@ import {
 } from "react";
 import { Link } from "react-router-dom";
 import { Download, RefreshCw } from "lucide-react";
-import { Button } from "../../components/ui/button";
-import { Modal } from "../../components/Modal";
+import { Button } from "../../components/atoms/Button";
+import { Modal } from "../../components/molecules/Modal";
 import { identidade } from "../../config";
 
 interface Release {
@@ -138,7 +138,7 @@ export function AvisoAtualizacao() {
   return (
     <div className="update-notice" role="status">
       <span>Nova versão {release.version} disponível.</span>
-      <Link to="/configuracoes">Ver atualização</Link>
+      <Link to="/atualizacoes">Ver atualização</Link>
     </div>
   );
 }

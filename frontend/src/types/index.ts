@@ -70,6 +70,7 @@ export interface Extrato {
   contrato: {
     id: string;
     cliente_id: string;
+    cliente_nome: string;
     modalidade: Modalidade;
     criado_em: string;
     taxa: string;

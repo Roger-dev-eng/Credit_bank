@@ -1,3 +1,4 @@
+param([switch]$SkipBackendTests)
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path $PSScriptRoot -Parent
 & node (Join-Path $PSScriptRoot 'installer-icon.mjs')
@@ -5,7 +6,12 @@ if($LASTEXITCODE -ne 0){throw 'Falha ao preparar o ícone do instalador.'}
 & (Join-Path $PSScriptRoot 'installer-artwork.ps1')
 $taskJdk=Split-Path (Split-Path (Get-Command javac.exe).Source -Parent) -Parent
 Push-Location (Join-Path $taskRoot 'backend')
-try { & mvn.cmd -B -ntp "-Dmaven.repo.local=$taskRoot/.dev/m2" clean package; if($LASTEXITCODE -ne 0){throw 'Falha no backend.'} } finally {Pop-Location}
+try {
+ $taskMavenArgs=@('-B','-ntp',"-Dmaven.repo.local=$taskRoot/.dev/m2",'clean','package')
+ if($SkipBackendTests){$taskMavenArgs+='-DskipTests'}
+ & mvn.cmd @taskMavenArgs
+ if($LASTEXITCODE -ne 0){throw 'Falha no backend.'}
+} finally {Pop-Location}
 $taskResources=Join-Path $taskRoot 'desktop/src-tauri/resources'
 New-Item -ItemType Directory -Force -Path $taskResources | Out-Null
 Copy-Item -LiteralPath (Join-Path $taskRoot 'backend/target/credito-backend-0.1.0.jar') -Destination (Join-Path $taskResources 'backend.jar')

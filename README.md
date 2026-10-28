@@ -2,16 +2,20 @@
 
 Aplicativo Windows para simular, confirmar e acompanhar operações de crédito, com React/TypeScript, backend Java 21, SQLite e Tauri 2. Sem marca comercial, seeds ou importação de localStorage.
 
-**Versão 0.2.0:** atualizações assinadas pela internet no próprio programa, com confirmação, progresso, backup automático e preservação do SQLite. Consulte [o funcionamento e a publicação de versões](docs/atualizacoes.md). Quem utiliza 0.1.0 precisa instalar 0.2.0 uma vez manualmente para habilitar o recurso.
+**Versão 0.3.0:** interface organizada com [Atomic Design](docs/atomic-design.md), cadastro direcionado à simulação, identificação e busca de contratos, estados de hover/foco e página Atualizações no menu lateral. Mantém as atualizações assinadas com backup e preservação do SQLite. Consulte [o funcionamento e a publicação de versões](docs/atualizacoes.md). A versão 0.2.0 já pode receber esta versão pelo próprio aplicativo; a 0.1.0 requer instalação manual.
 
 A [release pública 0.2.0](https://github.com/Roger-dev-eng/Credit_bank/releases/tag/v0.2.0) já foi publicada. O manifesto foi acessado sem autenticação, o SHA256 do pacote remoto coincide com o pacote local assinado, e a consulta pela versão Windows 0.2.0 retornou que ela já está atualizada.
 
-O instalador atual está em [dist/windows/Gestao-de-Credito-0.2.0-x64-instalador.exe](dist/windows/Gestao-de-Credito-0.2.0-x64-instalador.exe), aproximadamente 303 MiB, acompanhado da assinatura e do [SHA256](dist/windows/SHA256SUMS.txt). A pasta contém também `latest.json` e o código-fonte auditável da compilação em `Gestao-de-Credito-0.2.0-fonte.zip`. Os binários são artefatos locais ignorados pelo Git; o código e os scripts permitem recriá-los. Os arquivos 0.1.0 anteriores não têm o mecanismo de atualização.
+A [release pública 0.3.0](https://github.com/Roger-dev-eng/Credit_bank/releases/tag/v0.3.0) contém os ajustes de interface e navegação. Seu manifesto público e o SHA256 do instalador publicado foram conferidos. A assinatura é da mesma chave de atualização da 0.2.0; bancos e código-fonte não foram enviados na publicação.
+
+O instalador atual está em [dist/windows/Gestao-de-Credito-0.3.0-x64-instalador.exe](dist/windows/Gestao-de-Credito-0.3.0-x64-instalador.exe), acompanhado da assinatura e do [SHA256](dist/windows/SHA256SUMS.txt). A pasta contém também `latest.json` e o código-fonte local em `Gestao-de-Credito-0.3.0-fonte.zip`. Os binários são artefatos locais ignorados pelo Git; o código e os scripts permitem recriá-los. Os arquivos de versões anteriores são mantidos como histórico.
 
 ## Funcionalidades
 
 - Cadastro, edição, busca e exclusão protegida de clientes.
+- Após o cadastro, simulação aberta automaticamente com o cliente selecionado; edição mantém a página de clientes.
 - Vários contratos independentes por cliente, nas modalidades parcela fixa flat e só juros.
+- Nome do cliente na listagem de contratos e pesquisa por nome, identificador, modalidade ou status, ignorando acentos e caixa.
 - Simulações sem persistência; cálculo de parcela ou prazo; cronograma com vencimentos ancorados e resíduos monetários na última amortização.
 - Recebimentos integrais e parciais, multa/mora, saldo por parcela, indicadores e quitação derivados dos registros.
 - Estorno com justificativa, histórico preservado e proteção contra recebimentos duplicados.
@@ -58,7 +62,7 @@ java -jar backend/target/credito-backend-0.1.0.jar
 
 A primeira execução cria o diretório e aplica Flyway automaticamente. O banco começa vazio. Reabrir utiliza os mesmos dados. Nunca grave o banco na pasta de instalação ou em um diretório temporário.
 
-## Compilar o desktop e o instalador
+## Build local opcional para desenvolvimento
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1
@@ -80,29 +84,13 @@ npm --prefix desktop run dev
 
 O banco desktop fica em `%LOCALAPPDATA%/app.credito.desktop/credito.db`, fora da instalação. Backups de segurança anteriores à restauração ficam na subpasta `backups`. A pasta contém também `backend.log` e os dados locais do WebView2.
 
-## Executar os testes
+## Testes e publicação no GitHub Actions
 
-```powershell
-mvn -f backend/pom.xml test
-npm --prefix frontend run build
-# Requer backend/target/credito-backend-0.1.0.jar e Edge instalado:
-npm --prefix frontend run test:e2e
-# Requer scripts/prepare-desktop.ps1 executado:
-node scripts/runtime-smoke.mjs
-```
+Os testes Java, React/TypeScript e de navegador são executados no GitHub a cada push na main e em pull requests. Não é necessário executá-los neste computador. Os relatórios ficam na execução do Actions.
 
-Os testes Java utilizam bancos temporários exclusivos. Os testes de navegador criam bancos isolados em `.dev/e2e-*`, sem inserir dados na carteira de produção. O servidor de teste usa as portas 1421 e 18766; o teste do runtime usa 18767.
+Para distribuir uma nova versão, atualize os metadados e notas, envie o código e a tag vX.Y.Z. O workflow testa, compila e assina o instalador Windows, verifica a assinatura e publica os quatro arquivos da atualização no GitHub Releases. O script local de publicação foi removido. A execução manual pode gerar apenas artefatos ou, para versão inédita, um rascunho de release.
 
-Validações executadas durante a implementação:
-
-- 26 testes Java aprovados: os 24 casos financeiros existentes, mais manutenção da atualização com backup/bloqueio de gravações e migração de esquema preservando registros e backup anterior.
-- Build TypeScript/Vite de produção aprovado.
-- Cinco testes de navegador Edge aprovados: os dois fluxos financeiros existentes e três cenários da interface de atualização (confirmação, falha de instalação/assinatura, versão atualizada e indisponibilidade da internet). Os comandos nativos do updater são simulados somente nesses três testes de interface.
-- Compilação Rust/Tauri aprovada.
-- Runtime jlink exercitado com criação de banco vazio, API protegida e OpenAPI.
-- Abertura nativa do executável Windows verificada com consulta real ao backend e carteira vazia. Caminhos Windows estendidos são normalizados antes de passar o JAR ao Java.
-- Instalador NSIS `.exe` efetivamente gerado, com Java e WebView2 offline incluídos. Conteúdo extraído e conferido; aplicativo extraído abriu com banco vazio. Encerramento normal do Java auxiliar foi verificado.
-- O JAR do instalador final foi conferido por SHA256; o executável extraído coincide com a compilação após o marcador de tipo de bundle NSIS aplicado pelo Tauri.
+Consulte [a configuração, os Secrets e o processo de release](docs/github-actions.md) e acompanhe [as execuções no GitHub](https://github.com/Roger-dev-eng/Credit_bank/actions). Os scripts de build permanecem como ferramentas internas do runner e para desenvolvimento opcional.
 
 ## Limites da versão
 
@@ -113,4 +101,3 @@ Validações executadas durante a implementação:
 - Testes de navegador verificam os fluxos financeiros; a abertura nativa verifica IPC e ciclo do processo. Não foi realizada uma auditoria independente financeira ou de segurança.
 
 O canal de atualização consulta GitHub Releases por HTTPS e baixa somente pacotes assinados. Clientes, contratos, pagamentos e backups permanecem locais. A troca completa de versão via instalador ainda deve ser validada em Windows limpo/VM antes de distribuição ampla.
-

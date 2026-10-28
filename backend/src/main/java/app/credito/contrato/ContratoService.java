@@ -311,6 +311,7 @@ public class ContratoService {
   @Transactional(readOnly = true)
   public Extrato extrato(String id) {
     var c = r.obter("contratos", id);
+    c.put("cliente_nome", clientes.obter(texto(c, "cliente_id")).nome);
     var ps = r
       .parcelas(id)
       .stream()

@@ -1,6 +1,6 @@
-import type { Indicadores, Linha, Parcela } from "../types";
-import { data, dinheiro, statusLabel } from "../utils/format";
-import { Button } from "./ui/button";
+import type { Indicadores, Linha, Parcela } from "../../types";
+import { data, dinheiro, statusLabel } from "../../utils/format";
+import { Button } from "../atoms/Button";
 export function IndicadoresCards({ value: i }: { value: Indicadores }) {
   const cards: [string, number, string][] = [
     ["Valor contratado", i.original, ""],
