@@ -13,14 +13,17 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ApiLocalFilter extends OncePerRequestFilter {
 
   private final byte[] token;
+  private final ManutencaoService manutencao;
 
   public ApiLocalFilter(
-    @Value("${credito.token:${CREDITO_TOKEN:}}") String token
+    @Value("${credito.token:${CREDITO_TOKEN:}}") String token,
+    ManutencaoService manutencao
   ) {
     if (token.length() < 32) throw new IllegalStateException(
       "Defina CREDITO_TOKEN com pelo menos 32 caracteres."
     );
     this.token = token.getBytes(StandardCharsets.UTF_8);
+    this.manutencao = manutencao;
   }
 
   @Override
@@ -41,6 +44,21 @@ public class ApiLocalFilter extends OncePerRequestFilter {
     res.setHeader("Cache-Control", "no-store");
     // One local financial request at a time, including backup/restore, to avoid SQLite read-to-write promotion races.
     synchronized (this) {
+      if (
+        manutencao.ativa() &&
+        !req.getMethod().equals("GET") &&
+        !req.getRequestURI().equals("/api/atualizacoes/liberar") &&
+        !req.getRequestURI().equals("/api/atualizacoes/preparar")
+      ) {
+        res.setStatus(503);
+        res.setContentType("application/problem+json;charset=UTF-8");
+        res
+          .getWriter()
+          .write(
+            "{\"detail\":\"Atualização em preparação. Aguarde a conclusão para registrar operações.\"}"
+          );
+        return;
+      }
       chain.doFilter(req, res);
     }
   }

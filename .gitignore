@@ -7,6 +7,8 @@
 *.db-*
 *.log
 .dev/
+.signing/
+*.tsbuildinfo
 desktop/src-tauri/resources/
 frontend/test-results/
 frontend/playwright-report/

@@ -1,5 +1,7 @@
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path $PSScriptRoot -Parent
+& node (Join-Path $PSScriptRoot 'installer-icon.mjs')
+if($LASTEXITCODE -ne 0){throw 'Falha ao preparar o ícone do instalador.'}
 & (Join-Path $PSScriptRoot 'installer-artwork.ps1')
 $taskJdk=Split-Path (Split-Path (Get-Command javac.exe).Source -Parent) -Parent
 Push-Location (Join-Path $taskRoot 'backend')

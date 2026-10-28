@@ -1,12 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use std::{process::{Child, Command, Stdio}, sync::Mutex, time::Duration};
 use tauri::Manager;
+use std::sync::atomic::{AtomicBool,Ordering};
+mod updates;
 
 struct Backend {
  child: Mutex<Child>,
  url: String,
  token: String,
  client: reqwest::Client,
+ updating: AtomicBool,
  #[cfg(windows)]
  job: usize,
 }
@@ -34,6 +37,7 @@ fn attach_job(child: &Child) -> Result<usize, String> {
 }
 
 async fn request(backend: &Backend, path: String, method: String, body: Option<String>) -> Result<reqwest::Response,String> {
+ if method != "GET" && backend.updating.load(Ordering::SeqCst) {return Err("Aguarde a atualização para registrar operações.".into());}
  if !path.starts_with("/api/") || path.contains("..") || path.contains('#') || path.contains('\\') { return Err("Caminho de API inválido.".into()); }
  if !["GET","POST","PUT","DELETE"].contains(&method.as_str()) { return Err("Método inválido.".into()); }
  let mut ready=false;
@@ -68,6 +72,8 @@ async fn api_download(state: tauri::State<'_,Backend>,path:String) -> Result<Vec
 
 fn main(){
  tauri::Builder::default()
+ .plugin(tauri_plugin_updater::Builder::new().build())
+ .manage(updates::Updates::default())
  .setup(|app|{
   let dir=app.path().app_local_data_dir()?;
   let dir=dunce::simplified(&dir).to_path_buf();std::fs::create_dir_all(&dir)?;
@@ -83,10 +89,10 @@ fn main(){
   let mut child=cmd.spawn()?;
   #[cfg(windows)] let job=match attach_job(&child){Ok(job)=>job,Err(e)=>{let _=child.kill();let _=child.wait();return Err(std::io::Error::other(e).into());}};
   let client=match reqwest::Client::builder().no_proxy().redirect(reqwest::redirect::Policy::none()).timeout(Duration::from_secs(30)).build(){Ok(c)=>c,Err(e)=>{let _=child.kill();let _=child.wait();return Err(e.into());}};
-  app.manage(Backend{child:Mutex::new(child),url:format!("http://127.0.0.1:{}",port),token,client,#[cfg(windows)]job});
+  app.manage(Backend{child:Mutex::new(child),url:format!("http://127.0.0.1:{}",port),token,client,updating:AtomicBool::new(false),#[cfg(windows)]job});
   Ok(())
  })
- .invoke_handler(tauri::generate_handler![api_request,api_download])
+ .invoke_handler(tauri::generate_handler![api_request,api_download,updates::check_update,updates::install_update])
  .on_window_event(|window,event|{if matches!(event,tauri::WindowEvent::Destroyed){if let Some(state)=window.app_handle().try_state::<Backend>(){if let Ok(mut child)=state.child.lock(){let _=child.kill();let _=child.wait();}}}})
  .run(tauri::generate_context!()).expect("Não foi possível iniciar Gestão de Crédito");
 }

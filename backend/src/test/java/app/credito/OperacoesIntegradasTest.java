@@ -31,6 +31,74 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 class OperacoesIntegradasTest {
 
+  @Test
+  void atualizacaoProtegeBancoEBloqueiaNovosLancamentos() throws Exception {
+    clientes.salvar(
+      null,
+      new ClienteService.Entrada("Preservar na atualização", null, null)
+    );
+    long antes = jdbc.queryForObject(
+      "SELECT count(*) FROM clientes",
+      Long.class
+    );
+    String token = "token-de-integracao-local-com-mais-de-32-caracteres";
+    try {
+      String resposta = mvc
+        .perform(
+          post("/api/atualizacoes/preparar").header("X-Credito-Token", token)
+        )
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+      String caminho = new com.fasterxml.jackson.databind.ObjectMapper()
+        .readTree(resposta)
+        .get("backup")
+        .asText();
+      try (
+        var c = DriverManager.getConnection("jdbc:sqlite:" + caminho);
+        var s = c.createStatement();
+        var rs = s.executeQuery("SELECT count(*) FROM clientes")
+      ) {
+        assertThat(rs.getLong(1)).isEqualTo(antes);
+      }
+      String repetida = mvc
+        .perform(
+          post("/api/atualizacoes/preparar").header("X-Credito-Token", token)
+        )
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+      assertThat(repetida).isEqualTo(resposta);
+      mvc
+        .perform(
+          post("/api/clientes")
+            .header("X-Credito-Token", token)
+            .contentType("application/json")
+            .content("{\"nome\":\"Não gravar\"}")
+        )
+        .andExpect(status().isServiceUnavailable());
+      assertThat(
+        jdbc.queryForObject("SELECT count(*) FROM clientes", Long.class)
+      ).isEqualTo(antes);
+    } finally {
+      mvc
+        .perform(
+          post("/api/atualizacoes/liberar").header("X-Credito-Token", token)
+        )
+        .andExpect(status().isOk());
+    }
+    mvc
+      .perform(
+        post("/api/clientes")
+          .header("X-Credito-Token", token)
+          .contentType("application/json")
+          .content("{\"nome\":\"Após cancelamento\"}")
+      )
+      .andExpect(status().isOk());
+  }
+
   static final Path DIR;
 
   static {

@@ -41,6 +41,34 @@ public class BackupService {
     }
   }
 
+  public synchronized Path criarPersistente(String motivo) throws Exception {
+    if (
+      !Set.of("antes-atualizacao", "antes-migracao").contains(motivo)
+    ) throw new IllegalArgumentException("Tipo de backup inválido.");
+    Path path = dir
+      .resolve("backups")
+      .resolve(
+        motivo +
+          "-" +
+          Instant.now().toEpochMilli() +
+          "-" +
+          UUID.randomUUID() +
+          ".db"
+      );
+    Files.createDirectories(path.getParent());
+    try (var c = source.getConnection()) {
+      if (
+        c
+          .unwrap(SQLiteConnection.class)
+          .getDatabase()
+          .backup("main", path.toString(), null) != 0
+      ) throw new IllegalStateException(
+        "A atualização foi interrompida porque o backup não pôde ser criado."
+      );
+    }
+    return path;
+  }
+
   public synchronized void restaurar(byte[] bytes) throws Exception {
     if (
       bytes.length < 100 || bytes.length > 100_000_000

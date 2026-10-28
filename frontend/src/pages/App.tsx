@@ -7,6 +7,7 @@ import { Carteira } from "../features/contratos/Carteira";
 import { DetalheContrato } from "../features/contratos/DetalheContrato";
 import { Simulador } from "../features/simulacao/Simulador";
 import { Configuracoes } from "./Configuracoes";
+import { AvisoAtualizacao } from "../features/atualizacoes/Atualizacoes";
 export default function App() {
   return (
     <div className="app-shell">
@@ -50,6 +51,7 @@ export default function App() {
           <span className="badge">Uso local · BRL</span>
         </header>
         <main>
+          <AvisoAtualizacao />
           <Routes>
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/clientes/:id" element={<DetalheCliente />} />

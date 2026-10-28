@@ -6,6 +6,7 @@ import { api, baixar } from "../services/api";
 import { hoje } from "../utils/format";
 
 import { Erro } from "../components/Feedback";
+import { PainelAtualizacao } from "../features/atualizacoes/Atualizacoes";
 function Configuracoes() {
   const [erro, setErro] = useState<unknown>(null);
   const [mensagem, setMensagem] = useState("");
@@ -33,6 +34,7 @@ function Configuracoes() {
           <p className="muted">Backups do banco SQLite local.</p>
         </div>
       </div>
+      <PainelAtualizacao />
       <section className="card">
         <h2>Cópia de segurança</h2>
         <p>

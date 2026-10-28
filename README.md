@@ -2,7 +2,11 @@
 
 Aplicativo Windows para simular, confirmar e acompanhar operações de crédito, com React/TypeScript, backend Java 21, SQLite e Tauri 2. Sem marca comercial, seeds ou importação de localStorage.
 
-O instalador gerado nesta implementação está em [dist/windows/Gestao-de-Credito-0.1.0-x64-setup.exe](dist/windows/Gestao-de-Credito-0.1.0-x64-setup.exe), aproximadamente 301 MiB. O [SHA256](dist/windows/SHA256SUMS.txt) acompanha o arquivo. Os binários são artefatos locais ignorados pelo Git; o código e os scripts permitem recriá-los.
+**Versão 0.2.0:** atualizações assinadas pela internet no próprio programa, com confirmação, progresso, backup automático e preservação do SQLite. Consulte [o funcionamento e a publicação de versões](docs/atualizacoes.md). Quem utiliza 0.1.0 precisa instalar 0.2.0 uma vez manualmente para habilitar o recurso.
+
+A [release pública 0.2.0](https://github.com/Roger-dev-eng/Credit_bank/releases/tag/v0.2.0) já foi publicada. O manifesto foi acessado sem autenticação, o SHA256 do pacote remoto coincide com o pacote local assinado, e a consulta pela versão Windows 0.2.0 retornou que ela já está atualizada.
+
+O instalador atual está em [dist/windows/Gestao-de-Credito-0.2.0-x64-instalador.exe](dist/windows/Gestao-de-Credito-0.2.0-x64-instalador.exe), aproximadamente 303 MiB, acompanhado da assinatura e do [SHA256](dist/windows/SHA256SUMS.txt). A pasta contém também `latest.json` e o código-fonte auditável da compilação em `Gestao-de-Credito-0.2.0-fonte.zip`. Os binários são artefatos locais ignorados pelo Git; o código e os scripts permitem recriá-los. Os arquivos 0.1.0 anteriores não têm o mecanismo de atualização.
 
 ## Funcionalidades
 
@@ -15,6 +19,7 @@ O instalador gerado nesta implementação está em [dist/windows/Gestao-de-Credi
 - Prévia e confirmação de antecipação; extratos, histórico, impressão e exportação PDF.
 - Backup SQLite consistente e restauração validada, com cópia automática anterior à substituição.
 - API local em loopback, token por execução e comunicação desktop via IPC.
+- Atualizações via GitHub Releases, assinatura verificada antes de instalar, bloqueio temporário de lançamentos e backups anteriores à atualização/migração.
 
 ## Estrutura
 
@@ -63,7 +68,9 @@ Esse processo executa os testes Java, prepara o JAR e um runtime jlink, instala 
 
 O runtime existente é reutilizado. Para trocar a versão do JDK, renomeie `desktop/src-tauri/resources/runtime` antes de preparar novamente. `scripts/build-windows.ps1` também reconhece o Rust isolado em `.dev/rust/` utilizado nesta implementação, sem mudar o PATH permanente do Windows.
 
-O instalador e o desinstalador usam o mesmo ícone do aplicativo. O visual NSIS é personalizado em `desktop/src-tauri/installer/appearance.nsh`, com Segoe UI, cores do sistema, cabeçalho e lateral próprios. As imagens são reproduzidas por `scripts/installer-artwork.ps1`, executado automaticamente na preparação do desktop; a lógica de instalação/atualização permanece no template oficial do Tauri.
+O instalador e o desinstalador usam o mesmo ícone do aplicativo, com resoluções adicionais de 128 e 256 pixels para as visualizações do Explorador. O visual NSIS é personalizado em `desktop/src-tauri/installer/appearance.nsh`, com Segoe UI e cores do sistema. A lateral contém somente INSTALAÇÃO e o ícone; as imagens são geradas em resolução 3x por `scripts/installer-artwork.ps1`. `scripts/installer-icon.mjs` prepara as resoluções do ICO. Ambos são executados na preparação do desktop.
+
+O template oficial do Tauri 2.12.5 é mantido em `desktop/src-tauri/installer/template.nsi`, com uma única alteração: compressão zlib por arquivo, sem `/SOLID`, para evitar percorrer os runtimes grandes durante a extração dos componentes iniciais da interface. A lógica de instalação, atualização e a verificação de integridade são preservadas. Detalhes da origem e manutenção estão em `desktop/src-tauri/installer/README.md`. A primeira abertura ainda pode variar conforme a verificação do Windows, a sincronização do OneDrive e o disco.
 
 Para depurar Tauri depois de preparar os recursos:
 
@@ -88,9 +95,9 @@ Os testes Java utilizam bancos temporários exclusivos. Os testes de navegador c
 
 Validações executadas durante a implementação:
 
-- 24 testes Java aprovados: flat, só juros, cálculo inverso, arredondamento, taxa zero, fevereiro bissexto e comum, encargos, pagamentos, estornos, antecipações, quitação, integridade referencial, commit/reabertura e rollback, indicadores, backup/restauração, PDF e API protegida.
+- 26 testes Java aprovados: os 24 casos financeiros existentes, mais manutenção da atualização com backup/bloqueio de gravações e migração de esquema preservando registros e backup anterior.
 - Build TypeScript/Vite de produção aprovado.
-- Dois testes de navegador Edge aprovados, cobrindo cadastro, contrato, recebimento parcial, estorno, antecipação, PDF, backup/restauração e só juros com preservação do histórico.
+- Cinco testes de navegador Edge aprovados: os dois fluxos financeiros existentes e três cenários da interface de atualização (confirmação, falha de instalação/assinatura, versão atualizada e indisponibilidade da internet). Os comandos nativos do updater são simulados somente nesses três testes de interface.
 - Compilação Rust/Tauri aprovada.
 - Runtime jlink exercitado com criação de banco vazio, API protegida e OpenAPI.
 - Abertura nativa do executável Windows verificada com consulta real ao backend e carteira vazia. Caminhos Windows estendidos são normalizados antes de passar o JAR ao Java.
@@ -105,5 +112,5 @@ Validações executadas durante a implementação:
 - Não há assinatura digital do instalador configurada. Validação em uma máquina Windows limpa/VM e testes de instalação/desinstalação nesse ambiente continuam necessários antes de distribuição ampla.
 - Testes de navegador verificam os fluxos financeiros; a abertura nativa verifica IPC e ciclo do processo. Não foi realizada uma auditoria independente financeira ou de segurança.
 
-Não há integração externa de negócio. O único tráfego necessário é o download das ferramentas/dependências durante a compilação; os dados financeiros permanecem locais.
+O canal de atualização consulta GitHub Releases por HTTPS e baixa somente pacotes assinados. Clientes, contratos, pagamentos e backups permanecem locais. A troca completa de versão via instalador ainda deve ser validada em Windows limpo/VM antes de distribuição ampla.
 
