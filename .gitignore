@@ -1,0 +1,10 @@
+**/target/
+**/node_modules/
+**/dist/
+**/runtime/
+**/binaries/
+*.db
+*.db-*
+*.log
+.dev/
+desktop/src-tauri/resources/
