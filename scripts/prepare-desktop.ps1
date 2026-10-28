@@ -1,5 +1,6 @@
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path $PSScriptRoot -Parent
+& (Join-Path $PSScriptRoot 'installer-artwork.ps1')
 $taskJdk=Split-Path (Split-Path (Get-Command javac.exe).Source -Parent) -Parent
 Push-Location (Join-Path $taskRoot 'backend')
 try { & mvn.cmd -B -ntp "-Dmaven.repo.local=$taskRoot/.dev/m2" clean package; if($LASTEXITCODE -ne 0){throw 'Falha no backend.'} } finally {Pop-Location}

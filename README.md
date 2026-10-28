@@ -63,6 +63,8 @@ Esse processo executa os testes Java, prepara o JAR e um runtime jlink, instala 
 
 O runtime existente é reutilizado. Para trocar a versão do JDK, renomeie `desktop/src-tauri/resources/runtime` antes de preparar novamente. `scripts/build-windows.ps1` também reconhece o Rust isolado em `.dev/rust/` utilizado nesta implementação, sem mudar o PATH permanente do Windows.
 
+O instalador e o desinstalador usam o mesmo ícone do aplicativo. O visual NSIS é personalizado em `desktop/src-tauri/installer/appearance.nsh`, com Segoe UI, cores do sistema, cabeçalho e lateral próprios. As imagens são reproduzidas por `scripts/installer-artwork.ps1`, executado automaticamente na preparação do desktop; a lógica de instalação/atualização permanece no template oficial do Tauri.
+
 Para depurar Tauri depois de preparar os recursos:
 
 ```powershell
