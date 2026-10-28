@@ -8,3 +8,5 @@
 *.log
 .dev/
 desktop/src-tauri/resources/
+frontend/test-results/
+frontend/playwright-report/
