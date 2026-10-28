@@ -4,9 +4,13 @@ O processo oficial de validação e distribuição passa a ocorrer no GitHub, se
 
 ## Testes
 
+O trabalho cotidiano fica nos arquivos locais. Commits, envio ao GitHub, disparo manual e acompanhamento das execuções só devem ocorrer quando o usuário pedir. Quando houver um envio autorizado, o workflow de testes inicia automaticamente.
+
 `.github/workflows/ci.yml` executa em pushes na `main`, pull requests e quando chamado pelo workflow de release. Usa Windows, Java 21, Node 24 e Edge. Executa os testes Java, o build React/TypeScript e os testes de navegador. Os relatórios ficam nos artefatos da execução por sete dias. Esse workflow não recebe a chave de assinatura.
 
 ## Nova versão
+
+Gerar instalador ou publicar uma release exige pedido explícito do usuário. Alterações comuns executam somente o workflow **Testes**; não criar tags nem disparar **Versão Windows** automaticamente após cada alteração.
 
 1. Atualizar as versões do Tauri, Cargo, pacotes/lockfiles e interface; criar `docs/releases/X.Y.Z.md`.
 2. Enviar o código ao GitHub e criar/enviar a tag `vX.Y.Z` no commit correspondente.

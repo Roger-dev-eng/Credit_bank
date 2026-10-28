@@ -2,7 +2,7 @@
 
 O frontend guarda em localStorage do perfil do WebView uma cópia das listas de clientes e dos resumos de contratos consultados. Não guarda token, mutações pendentes, extratos individuais nem histórico de pagamentos/parcelas. Buscas textuais de clientes não geram novas cópias persistentes. O SQLite continua como fonte dos dados.
 
-Na abertura, o QueryClient hidrata essas listas antes da primeira renderização e consulta o backend em segundo plano, mesmo quando o cache existe. Abrir os detalhes de um contrato exige consulta ao banco antes de apresentar as ações financeiras. O cache agiliza a exibição; não reduz o tempo de inicialização do Java.
+Na abertura, o QueryClient hidrata essas listas antes da primeira renderização e consulta o backend em segundo plano, mesmo quando o cache existe. Ao reabrir o aplicativo, os detalhes de um contrato exigem consulta ao banco antes de apresentar as ações financeiras. O cache agiliza a exibição; não reduz o tempo de inicialização do Java.
 
 A validade máxima é de 24 horas por consulta. Alterações de versão descartam cópias da versão anterior. JSON inválido, estrutura incompatível, validade vencida e falhas de armazenamento são tratados sem impedir a abertura. A gravação é agrupada em intervalos de 150 ms e também ocorre quando a janela é ocultada ou o documento fecha; dados de uma gravação anterior continuam disponíveis em caso de encerramento abrupto.
 
