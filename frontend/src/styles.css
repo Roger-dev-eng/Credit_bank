@@ -828,3 +828,17 @@ dialog p {
   }
 }
 .simulation-client{margin:0 0 18px;padding:12px 16px;background:#fff;border:1px solid #dce4f5;border-left:3px solid #7b98cf;border-radius:9px;font-size:13px;color:#536585}.simulation-client strong{color:#293e69}
+.notification-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 13px 16px;
+  border: 1px solid #b9dfca;
+  border-radius: 10px;
+  background: #effaf3;
+  color: #226344;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.notification-success svg { flex-shrink: 0; }

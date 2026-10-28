@@ -85,6 +85,9 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
   await page.getByRole("button", { name: "Exportar backup" }).click();
   const backup = await backupPromise;
   await backup.saveAs("../.dev/e2e-backup.db");
+  await expect(page.getByRole("status")).toContainText(
+    "Backup exportado com sucesso. Download iniciado:",
+  );
   await page.getByRole("link", { name: "Clientes", exact: true }).click();
   await page.getByRole("button", { name: "Novo cliente", exact: true }).click();
   await page.getByLabel("Nome", { exact: true }).fill("Cliente após backup");
@@ -109,6 +112,9 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
   await expect(
     page.getByRole("link", { name: "Cliente após backup" }),
   ).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Cliente de teste isolado", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Cliente após backup", exact: true })).toHaveCount(0);
 });
 test("só juros preserva pagamentos e elimina juros futuros", async ({
   page,

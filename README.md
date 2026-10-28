@@ -2,7 +2,7 @@
 
 Aplicativo Windows para simular, confirmar e acompanhar operações de crédito, com React/TypeScript, backend Java 21, SQLite e Tauri 2. Sem marca comercial, seeds ou importação de localStorage.
 
-**Versão 0.3.0:** interface organizada com [Atomic Design](docs/atomic-design.md), cadastro direcionado à simulação, identificação e busca de contratos, estados de hover/foco e página Atualizações no menu lateral. Mantém as atualizações assinadas com backup e preservação do SQLite. Consulte [o funcionamento e a publicação de versões](docs/atualizacoes.md). A versão 0.2.0 já pode receber esta versão pelo próprio aplicativo; a 0.1.0 requer instalação manual.
+**Versão 0.4.0:** confirmação de exportação do banco, cache das listas na reabertura e navegação sem os textos “Armazenamento local” e “Uso local · BRL”. Consulte [o funcionamento do cache](docs/cache.md). Mantém a interface organizada com [Atomic Design](docs/atomic-design.md), cadastro direcionado à simulação, identificação e busca de contratos, estados de hover/foco e página Atualizações no menu lateral. Mantém as atualizações assinadas com backup e preservação do SQLite. Consulte [o funcionamento e a publicação de versões](docs/atualizacoes.md). A versão 0.2.0 já pode receber esta versão pelo próprio aplicativo; a 0.1.0 requer instalação manual.
 
 A [release pública 0.2.0](https://github.com/Roger-dev-eng/Credit_bank/releases/tag/v0.2.0) já foi publicada. O manifesto foi acessado sem autenticação, o SHA256 do pacote remoto coincide com o pacote local assinado, e a consulta pela versão Windows 0.2.0 retornou que ela já está atualizada.
 

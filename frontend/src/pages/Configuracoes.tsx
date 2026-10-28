@@ -6,11 +6,28 @@ import { api, baixar } from "../services/api";
 import { hoje } from "../utils/format";
 
 import { Erro } from "../components/molecules/Feedback";
+import { Notificacao } from "../components/molecules/Notificacao";
 function Configuracoes() {
   const [erro, setErro] = useState<unknown>(null);
+  const [exportando, setExportando] = useState(false);
+  const [exportado, setExportado] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const q = useQueryClient();
+  async function exportar() {
+    setErro(null);
+    setExportado("");
+    setExportando(true);
+    const nome = "gestao-credito-" + hoje() + ".db";
+    try {
+      await baixar("/api/backups", nome);
+      setExportado("Backup exportado com sucesso. Download iniciado: " + nome);
+    } catch (error) {
+      setErro(error);
+    } finally {
+      setExportando(false);
+    }
+  }
   const restore = useMutation({
     mutationFn: async () => {
       if (!arquivo) throw new Error("Selecione um arquivo.");
@@ -40,16 +57,11 @@ function Configuracoes() {
           financeiro.
         </p>
         <Erro error={erro} />
-        <Button
-          onClick={() =>
-            baixar("/api/backups", "gestao-credito-" + hoje() + ".db").catch(
-              setErro,
-            )
-          }
-        >
+        <Button onClick={exportar} disabled={exportando || restore.isPending}>
           <Download size={16} />
-          Exportar backup
+          {exportando ? "Exportando…" : "Exportar backup"}
         </Button>
+        {exportado && <Notificacao>{exportado}</Notificacao>}
       </section>
       <section className="card">
         <h2>Restaurar backup</h2>
@@ -67,7 +79,7 @@ function Configuracoes() {
         <Erro error={restore.error} />
         <Button
           variant="destructive"
-          disabled={!arquivo || restore.isPending}
+          disabled={!arquivo || restore.isPending || exportando}
           onClick={() => {
             if (
               window.confirm(

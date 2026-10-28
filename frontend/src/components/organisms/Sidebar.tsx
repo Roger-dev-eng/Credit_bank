@@ -37,8 +37,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="sidebar-footer">
-        <span className="offline-dot" />
-        Armazenamento local<small>Versão {identidade.versao}</small>
+        <small>Versão {identidade.versao}</small>
       </div>
     </aside>
   );
