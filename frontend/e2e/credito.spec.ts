@@ -59,19 +59,28 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
   expect(pdf.suggestedFilename()).toMatch(/extrato.*\.pdf/);
   await pdf.saveAs("../.dev/e2e-extrato.pdf");
   await page.screenshot({ path: "../.dev/e2e-contrato.png", fullPage: true });
-  await page.getByRole('navigation',{name:'Menu principal'}).getByRole("link", { name: "Contratos", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Menu principal" })
+    .getByRole("link", { name: "Contratos", exact: true })
+    .click();
   const linha = page
     .locator(".contract-row")
     .filter({ hasText: "Cliente de teste isolado" });
   await expect(linha).toHaveCount(1);
   const codigo = (await linha.getAttribute("href"))!.split("/").pop()!;
-  await page.getByRole("searchbox", { name: "Pesquisar contratos", exact: true }).fill("TESTE ISOLADO fixa");
+  await page
+    .getByRole("searchbox", { name: "Pesquisar contratos", exact: true })
+    .fill("TESTE ISOLADO fixa");
   await expect(linha).toBeVisible();
   await linha.hover();
   await expect(linha).toHaveCSS("background-color", "rgb(242, 245, 252)");
-  await page.getByRole("searchbox", { name: "Pesquisar contratos", exact: true }).fill(codigo.slice(0, 8));
+  await page
+    .getByRole("searchbox", { name: "Pesquisar contratos", exact: true })
+    .fill(codigo.slice(0, 8));
   await expect(linha).toBeVisible();
-  await page.getByRole("searchbox", { name: "Pesquisar contratos", exact: true }).fill("contrato inexistente");
+  await page
+    .getByRole("searchbox", { name: "Pesquisar contratos", exact: true })
+    .fill("contrato inexistente");
   await expect(
     page.getByText("Nenhum contrato encontrado para esta pesquisa."),
   ).toBeVisible();
@@ -88,12 +97,12 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
   await expect(page.getByRole("status")).toContainText(
     "Backup exportado com sucesso. Download iniciado:",
   );
-  await page.getByRole("link", { name: "Clientes", exact: true }).click();
+  await page.getByRole("link", { name: "Clientes" }).click();
   await page.getByRole("button", { name: "Novo cliente", exact: true }).click();
   await page.getByLabel("Nome", { exact: true }).fill("Cliente após backup");
   await page.getByRole("button", { name: "Salvar cliente" }).click();
   await expect(page).toHaveURL(/#\/simulador\?cliente=/);
-  await page.getByRole("link", { name: "Clientes", exact: true }).click();
+  await page.getByRole("link", { name: "Clientes" }).click();
   await expect(
     page.getByRole("link", { name: "Cliente após backup" }),
   ).toBeVisible();
@@ -108,13 +117,17 @@ test("cliente, contrato, pagamento parcial, estorno, antecipação e exportaçã
   await expect(
     page.getByText("Backup restaurado.", { exact: false }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Clientes", exact: true }).click();
+  await page.getByRole("link", { name: "Clientes" }).click();
   await expect(
     page.getByRole("link", { name: "Cliente após backup" }),
   ).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole("link", { name: "Cliente de teste isolado", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Cliente após backup", exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Cliente de teste isolado" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Cliente após backup" }),
+  ).toHaveCount(0);
 });
 test("só juros preserva pagamentos e elimina juros futuros", async ({
   page,

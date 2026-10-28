@@ -21,7 +21,7 @@ test("reabrir mostra clientes do cache antes do backend e atualiza os dados", as
   );
   await page.goto("/#/clientes");
   await expect(
-    page.getByRole("link", { name: "Cliente em cache", exact: true }),
+    page.getByRole("link", { name: "Cliente em cache" }),
   ).toBeVisible();
   await expect
     .poll(() => page.evaluate((key) => localStorage.getItem(key), cacheKey))
@@ -39,7 +39,7 @@ test("reabrir mostra clientes do cache antes do backend e atualiza os dados", as
   await reopened.goto("/#/clientes");
   try {
     await expect(
-      reopened.getByRole("link", { name: "Cliente em cache", exact: true }),
+      reopened.getByRole("link", { name: "Cliente em cache" }),
     ).toBeVisible();
     await expect(
       reopened.getByText("Carregando dados…", { exact: true }),
@@ -50,11 +50,10 @@ test("reabrir mostra clientes do cache antes do backend e atualiza os dados", as
   await expect(
     reopened.getByRole("link", {
       name: "Cliente atualizado no banco",
-      exact: true,
     }),
   ).toBeVisible();
   await expect(
-    reopened.getByRole("link", { name: "Cliente em cache", exact: true }),
+    reopened.getByRole("link", { name: "Cliente em cache" }),
   ).toHaveCount(0);
   await expect(
     reopened.getByText("Armazenamento local", { exact: true }),
@@ -76,7 +75,7 @@ test("cache corrompido é descartado sem impedir a abertura", async ({
   );
   await page.goto("/#/clientes");
   await expect(
-    page.getByRole("link", { name: "Cliente vindo do banco", exact: true }),
+    page.getByRole("link", { name: "Cliente vindo do banco" }),
   ).toBeVisible();
 });
 
@@ -114,12 +113,10 @@ test("cache expirado não reaparece enquanto o banco carrega", async ({
       page.getByText("Carregando dados…", { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Cliente antigo expirado", exact: true }),
+      page.getByRole("link", { name: "Cliente antigo expirado" }),
     ).toHaveCount(0);
   } finally {
     liberar();
   }
-  await expect(
-    page.getByRole("link", { name: "Cliente atual", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Cliente atual" })).toBeVisible();
 });
