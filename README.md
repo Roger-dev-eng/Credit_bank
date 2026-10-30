@@ -1,103 +1,250 @@
 # Gestão de Crédito
 
-Aplicativo Windows para simular, confirmar e acompanhar operações de crédito, com React/TypeScript, backend Java 21, SQLite e Tauri 2. Sem marca comercial, seeds ou importação de localStorage.
+Este projeto é um aplicativo desktop para **Windows**, desenvolvido com **React e TypeScript**, backend em **Java 21 com Spring Boot** e integração nativa com **Tauri 2 e Rust**. Ele permite cadastrar clientes, simular operações de crédito, acompanhar contratos e registrar recebimentos. Os dados ficam em **SQLite no próprio computador**, e o aplicativo instalado funciona offline.
 
-**Versão 0.4.1:** compactação LZMA por arquivo para reduzir o instalador, mantendo os componentes offline. Mantém as melhorias da 0.4.0: confirmação de exportação do banco, cache das listas na reabertura e navegação sem os textos “Armazenamento local” e “Uso local · BRL”. Consulte [o funcionamento do cache](docs/cache.md). Mantém a interface organizada com [Atomic Design](docs/atomic-design.md), cadastro direcionado à simulação, identificação e busca de contratos, estados de hover/foco e página Atualizações no menu lateral. Mantém as atualizações assinadas com backup e preservação do SQLite. Consulte [o funcionamento e a publicação de versões](docs/atualizacoes.md). A versão 0.2.0 já pode receber esta versão pelo próprio aplicativo; a 0.1.0 requer instalação manual.
+Para baixar o aplicativo: [Instaladores no GitHub Releases](https://github.com/Roger-dev-eng/Credit_bank/releases/latest).
 
-A [release pública 0.2.0](https://github.com/Roger-dev-eng/Credit_bank/releases/tag/v0.2.0) já foi publicada. O manifesto foi acessado sem autenticação, o SHA256 do pacote remoto coincide com o pacote local assinado, e a consulta pela versão Windows 0.2.0 retornou que ela já está atualizada.
+## Conteúdo
 
-A [release pública 0.3.0](https://github.com/Roger-dev-eng/Credit_bank/releases/tag/v0.3.0) contém os ajustes de interface e navegação. Seu manifesto público e o SHA256 do instalador publicado foram conferidos. A assinatura é da mesma chave de atualização da 0.2.0; bancos e código-fonte não foram enviados na publicação.
+- [Descrição](#descrição)
+- [Funcionalidades](#funcionalidades)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Explicação dos principais componentes](#explicação-dos-principais-componentes)
+- [Como instalar o aplicativo](#como-instalar-o-aplicativo)
+- [Como executar localmente](#como-executar-localmente)
+- [Como usar](#como-usar)
+- [Dados, backups e cache](#dados-backups-e-cache)
+- [Atualizações e publicação](#atualizações-e-publicação)
+- [Testes automatizados](#testes-automatizados)
+- [Privacidade e limites](#privacidade-e-limites)
+- [Tecnologias utilizadas](#tecnologias-utilizadas)
+- [O que foi aprendido](#o-que-foi-aprendido)
+- [Documentação complementar](#documentação-complementar)
+- [Licença](#licença)
 
-O instalador atual está em [dist/windows/Gestao-de-Credito-0.3.0-x64-instalador.exe](dist/windows/Gestao-de-Credito-0.3.0-x64-instalador.exe), acompanhado da assinatura e do [SHA256](dist/windows/SHA256SUMS.txt). A pasta contém também `latest.json` e o código-fonte local em `Gestao-de-Credito-0.3.0-fonte.zip`. Os binários são artefatos locais ignorados pelo Git; o código e os scripts permitem recriá-los. Os arquivos de versões anteriores são mantidos como histórico.
+## Descrição
+
+O sistema organiza o acompanhamento de operações de crédito em um fluxo de clientes, simulações, contratos e recebimentos. Cada cliente pode ter vários contratos independentes, com cronograma de vencimentos, saldo, encargos e histórico próprios.
+
+As modalidades disponíveis são **parcela fixa flat** e **só juros**. Uma simulação não grava uma operação financeira: o contrato e suas parcelas são criados somente após a confirmação. Os cálculos e a persistência ficam no backend; a interface apresenta os resultados e permite registrar as operações.
 
 ## Funcionalidades
 
-- Cadastro, edição, busca e exclusão protegida de clientes.
-- Após o cadastro, simulação aberta automaticamente com o cliente selecionado; edição mantém a página de clientes.
-- Vários contratos independentes por cliente, nas modalidades parcela fixa flat e só juros.
-- Nome do cliente na listagem de contratos e pesquisa por nome, identificador, modalidade ou status, ignorando acentos e caixa.
-- Simulações sem persistência; cálculo de parcela ou prazo; cronograma com vencimentos ancorados e resíduos monetários na última amortização.
-- Recebimentos integrais e parciais, multa/mora, saldo por parcela, indicadores e quitação derivados dos registros.
-- Estorno com justificativa, histórico preservado e proteção contra recebimentos duplicados.
-- Antecipação fixa como pagamento real nas últimas parcelas; alteração planejada de quitação em só juros com eliminação de juros futuros e proteção dos pagamentos anteriores.
-- Prévia e confirmação de antecipação; extratos, histórico, impressão e exportação PDF.
-- Backup SQLite consistente e restauração validada, com cópia automática anterior à substituição.
-- API local em loopback, token por execução e comunicação desktop via IPC.
-- Atualizações via GitHub Releases, assinatura verificada antes de instalar, bloqueio temporário de lançamentos e backups anteriores à atualização/migração.
+- Cadastro, edição, pesquisa e exclusão protegida de clientes.
+- Abertura automática da simulação após cadastrar um cliente, já com ele selecionado.
+- Simulação nas modalidades parcela fixa flat e só juros, com cálculo de parcela ou prazo e cronograma de vencimentos.
+- Vários contratos por cliente, com identificação pelo nome e pesquisa por cliente, identificador, modalidade ou status.
+- Registro de recebimentos integrais e parciais, com multa, mora e atualização do saldo por parcela.
+- Estorno com justificativa, histórico preservado e proteção contra pagamentos duplicados.
+- Prévia e confirmação de antecipação nas duas modalidades, conforme suas regras específicas.
+- Extratos, histórico das operações, impressão e exportação em PDF.
+- Exportação do banco com aviso de download iniciado e restauração validada de backups.
+- Cache local das listas de clientes e dos resumos de contratos para agilizar a reabertura.
+- Interface organizada com Atomic Design, componentes compartilhados e estados de foco e hover.
+- Atualizações pelo próprio aplicativo, com assinatura verificada e backups anteriores à atualização e à migração.
+- Instalador Windows com Java e WebView2 incluídos, compactação LZMA por arquivo e instalação offline.
 
-## Estrutura
+As regras de pagamentos, encargos e antecipações estão detalhadas na [análise do protótipo e nas decisões financeiras](docs/analise-prototipo.md).
+
+## Estrutura do projeto
 
 ```text
-backend/     Spring Boot, regras financeiras, migração SQLite, testes e OpenAPI
-frontend/    React, TypeScript, Vite, Tailwind, componentes shadcn/ui, Router,
-             TanStack Query, React Hook Form e Zod
-desktop/     Tauri 2, ponte IPC, processo Java auxiliar e instalador NSIS
-scripts/     desenvolvimento, preparação jlink, build e validação do runtime
-docs/        análise do protótipo, decisões financeiras e arquitetura
+Credit_bank/
+│
+├── backend/
+│   ├── src/main/java/app/credito/
+│   │   ├── calculo/          # Fórmulas e cronogramas das simulações
+│   │   ├── cliente/          # Cadastro e consulta de clientes
+│   │   ├── contrato/         # Contratos, recebimentos e antecipações
+│   │   ├── relatorio/        # Geração de relatórios
+│   │   ├── config/           # Configuração e proteção da API local
+│   │   └── shared/           # Recursos compartilhados
+│   ├── src/main/resources/   # Configurações e migrações do banco
+│   ├── src/test/             # Testes Java
+│   └── pom.xml
+│
+├── frontend/
+│   ├── src/components/       # Átomos, moléculas, organismos e templates
+│   ├── src/features/         # Clientes, simulações, contratos e atualizações
+│   ├── src/pages/            # Páginas e navegação
+│   ├── src/services/         # Comunicação com a API e cache de consultas
+│   ├── src/types/            # Tipos compartilhados
+│   └── e2e/                 # Testes de navegador
+│
+├── desktop/src-tauri/
+│   ├── src/                 # Host Rust, ponte IPC e atualizador
+│   ├── installer/           # Template, imagens e aparência do NSIS
+│   └── tauri.conf.json      # Configuração do aplicativo e do instalador
+│
+├── scripts/                 # Desenvolvimento, preparação e empacotamento
+├── docs/                    # Arquitetura, regras, cache e atualizações
+├── .github/workflows/       # Testes e publicação pelo GitHub Actions
+├── LICENSE
+└── README.md
 ```
 
-Leia [a análise e as regras aprovadas](docs/analise-prototipo.md) e [a arquitetura/API](docs/arquitetura.md). O nome temporário está centralizado em `frontend/src/config.ts`; cores estão em `frontend/src/styles.css` e `tailwind.config.js`. Metadados nativos ficam em `desktop/src-tauri/tauri.conf.json` e o cabeçalho PDF no backend.
+## Explicação dos principais componentes
 
-## Desenvolvimento no Windows
+### `backend/`
 
-Requer JDK 21, Maven, Node.js e npm. Para desktop, também Rust stable MSVC, Visual Studio Build Tools com C++ desktop e WebView2. A instalação final inclui os runtimes necessários; o usuário final não precisa instalar ferramentas de desenvolvimento.
+Concentra os cálculos, as validações e as transações financeiras. O cadastro de clientes utiliza Spring Data JPA e Hibernate; os registros financeiros utilizam JdbcTemplate na mesma transação Spring. Valores monetários são armazenados em centavos inteiros, e o Flyway mantém as migrações do esquema.
+
+Saldos e indicadores são calculados a partir dos registros de pagamentos, alocações, estornos e antecipações. A exclusão de clientes com contratos vinculados é protegida pelo sistema.
+
+### `frontend/`
+
+Contém a interface React, os formulários, a navegação e a apresentação dos resultados. Os componentes seguem a organização de Atomic Design, e o TanStack Query administra as consultas ao backend e o cache das listas.
+
+O nome e a versão exibidos ficam em `frontend/src/config.ts`. Os estilos estão em `frontend/src/styles.css` e `frontend/tailwind.config.js`.
+
+### `desktop/src-tauri/`
+
+Integra a interface ao Windows, inicia o Java auxiliar e encerra esse processo ao fechar o aplicativo. A comunicação utiliza comandos IPC, com uma credencial gerada a cada execução. Esse componente também verifica atualizações e coordena a instalação dos pacotes assinados.
+
+### `scripts/` e `.github/workflows/`
+
+Preparam o backend, o runtime Java e os recursos do instalador. O GitHub Actions executa a validação automática e, quando uma versão é solicitada e identificada por tag, gera e publica os arquivos da atualização.
+
+## Como instalar o aplicativo
+
+1. Acesse a [página de Releases](https://github.com/Roger-dev-eng/Credit_bank/releases/latest).
+2. Baixe o arquivo `Gestao-de-Credito-X.Y.Z-x64-instalador.exe` da versão desejada.
+3. Execute o instalador e conclua a instalação.
+4. Abra **Gestão de Crédito** pelo atalho criado e cadastre o primeiro cliente.
+
+A instalação é por usuário, para Windows x64, e inclui Java e WebView2. Não é necessário instalar ferramentas de desenvolvimento para usar o aplicativo. O banco começa vazio em uma instalação sem dados anteriores.
+
+Para compartilhar o sistema, envie o instalador ou o link da release. O banco do seu computador não faz parte do instalador.
+
+## Como executar localmente
+
+O desenvolvimento utiliza **Windows x64, JDK 21, Maven, Node.js e npm**. Para executar a versão nativa, também são necessários Rust stable com MSVC, Visual Studio Build Tools com C++ desktop e WebView2.
+
+1. Clone o repositório:
+
+```powershell
+git clone https://github.com/Roger-dev-eng/Credit_bank.git
+cd Credit_bank
+```
+
+2. Instale as dependências e compile o backend sem executar a suíte de testes local:
 
 ```powershell
 npm --prefix frontend ci
 npm --prefix desktop ci
-powershell -ExecutionPolicy Bypass -File scripts/dev.ps1
+mvn -B -ntp -f backend/pom.xml -DskipTests package
 ```
 
-O script compila/testa o backend, gera uma credencial aleatória para a sessão e inicia Java e Vite em `http://127.0.0.1:1420`. Ao sair do Vite, encerra o Java. Os dados de desenvolvimento ficam em `.dev/data/`, separados da instalação real.
-
-Para iniciar apenas o backend:
+3. No mesmo terminal PowerShell, configure a sessão de desenvolvimento e inicie os serviços:
 
 ```powershell
 $env:CREDITO_TOKEN = [guid]::NewGuid().ToString() + [guid]::NewGuid().ToString()
-$env:CREDITO_DATA_DIR = Join-Path $env:LOCALAPPDATA 'GestaoCredito'
+$env:CREDITO_DATA_DIR = Join-Path (Get-Location).Path '.dev/data'
 $env:CREDITO_PORT = '18765'
-mvn -f backend/pom.xml package
-java -jar backend/target/credito-backend-0.1.0.jar
+
+$creditoBackend = Start-Process -FilePath 'java' -ArgumentList '-jar backend/target/credito-backend-0.1.0.jar' -WindowStyle Hidden -PassThru -ErrorAction Stop
+try {
+    npm --prefix frontend run dev
+} finally {
+    if (-not $creditoBackend.HasExited) {
+        Stop-Process -Id $creditoBackend.Id
+    }
+}
 ```
 
-A primeira execução cria o diretório e aplica Flyway automaticamente. O banco começa vazio. Reabrir utiliza os mesmos dados. Nunca grave o banco na pasta de instalação ou em um diretório temporário.
+Abra `http://127.0.0.1:1420`. Ao encerrar o Vite com `Ctrl+C`, o bloco de finalização encerra o Java iniciado para essa sessão. Os dados ficam em `.dev/data/`, separados da instalação real.
 
-## Build local opcional para desenvolvimento
+O JAR mantém o nome `credito-backend-0.1.0.jar` conforme a versão do módulo Maven; a versão do aplicativo desktop é definida separadamente.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1
+Para desenvolvimento nativo, depois de preparar os recursos do Tauri, utilize `npm --prefix desktop run dev`. A preparação e a geração do instalador estão descritas na [documentação de build e publicação](docs/github-actions.md).
+
+## Como usar
+
+1. Em **Clientes**, clique em **Novo cliente** e preencha o cadastro. Ao salvar, a simulação abre com o cliente selecionado.
+2. Em **Simulador**, escolha a modalidade e informe os valores da operação. Calcule e revise o cronograma antes de confirmar o contrato.
+3. Em **Contratos**, pesquise pelo nome do cliente, identificador, modalidade ou status e abra a operação desejada.
+4. No detalhe do contrato, consulte vencimentos e saldos, registre recebimentos ou utilize a prévia de antecipação. Para corrigir um recebimento, use estorno com justificativa.
+5. Utilize a impressão ou o botão **PDF** para obter o extrato.
+6. Em **Dados e segurança**, exporte o banco ou selecione um backup para restauração.
+7. Em **Atualizações**, consulte a disponibilidade de uma nova versão.
+
+Na modalidade parcela fixa, a antecipação registra um pagamento real nas últimas parcelas, sem desconto de juros. Em só juros, a antecipação altera o planejamento da quitação e elimina juros futuros; o recebimento do principal é registrado separadamente.
+
+## Dados, backups e cache
+
+O banco da versão instalada fica em:
+
+```text
+%LOCALAPPDATA%/app.credito.desktop/credito.db
 ```
 
-Esse processo executa os testes Java, prepara o JAR e um runtime jlink, instala dependências com os lockfiles e gera o instalador NSIS em `desktop/src-tauri/target/release/bundle/nsis/`. Inclui o instalador offline WebView2, por isso o arquivo é maior e a primeira compilação requer downloads. O aplicativo instalado funciona offline.
+Esse diretório é separado dos arquivos de instalação. Ele também contém os backups de segurança, o log do backend e os dados locais do WebView2.
 
-O runtime existente é reutilizado. Para trocar a versão do JDK, renomeie `desktop/src-tauri/resources/runtime` antes de preparar novamente. `scripts/build-windows.ps1` também reconhece o Rust isolado em `.dev/rust/` utilizado nesta implementação, sem mudar o PATH permanente do Windows.
+Em **Dados e segurança → Exportar backup**, o sistema gera uma cópia consistente do SQLite e informa quando o download é iniciado. A restauração valida o arquivo e preserva uma cópia do banco anterior antes de substituí-lo.
 
-O instalador e o desinstalador usam o mesmo ícone do aplicativo, com resoluções adicionais de 128 e 256 pixels para as visualizações do Explorador. O visual NSIS é personalizado em `desktop/src-tauri/installer/appearance.nsh`, com Segoe UI e cores do sistema. A lateral contém somente INSTALAÇÃO e o ícone; as imagens são geradas em resolução 3x por `scripts/installer-artwork.ps1`. `scripts/installer-icon.mjs` prepara as resoluções do ICO. Ambos são executados na preparação do desktop.
+As listas consultadas são guardadas no cache local por até 24 horas e atualizadas pelo backend ao reabrir. Histórico de pagamentos, extratos individuais e mutações pendentes não entram nesse cache. O SQLite continua sendo a fonte dos dados. Consulte [o funcionamento do cache](docs/cache.md).
 
-O template oficial do Tauri 2.12.5 é mantido em `desktop/src-tauri/installer/template.nsi`, com uma única alteração: compactação LZMA por arquivo, sem `/SOLID`, para evitar percorrer os runtimes grandes durante a extração dos componentes iniciais da interface. A lógica de instalação, atualização e a verificação de integridade são preservadas. Detalhes da origem e manutenção estão em `desktop/src-tauri/installer/README.md`. A primeira abertura ainda pode variar conforme a verificação do Windows, a sincronização do OneDrive e o disco.
+## Atualizações e publicação
 
-Para depurar Tauri depois de preparar os recursos:
+O aplicativo consulta o GitHub Releases ao iniciar e pela página **Atualizações**, no menu lateral. Quando existe uma versão mais nova, apresenta o aviso e as notas; o download e a instalação exigem confirmação.
 
-```powershell
-npm --prefix desktop run dev
-```
+Antes da instalação, o sistema verifica a assinatura, prepara a manutenção e gera um backup do banco. O diretório de dados é preservado durante a atualização. As instalações 0.1.0 precisam de uma atualização manual inicial, pois ainda não incluem o atualizador.
 
-O banco desktop fica em `%LOCALAPPDATA%/app.credito.desktop/credito.db`, fora da instalação. Backups de segurança anteriores à restauração ficam na subpasta `backups`. A pasta contém também `backend.log` e os dados locais do WebView2.
+A distribuição utiliza [GitHub Releases](https://github.com/Roger-dev-eng/Credit_bank/releases). Para publicar uma nova versão, atualize os metadados e lockfiles, crie `docs/releases/X.Y.Z.md`, envie o código e a tag `vX.Y.Z`. O workflow **Versão Windows** valida a versão, executa os testes, compila, assina e verifica o pacote antes de publicar instalador, assinatura, manifesto e checksums.
 
-## Testes e publicação no GitHub Actions
+O workflow também permite execução manual: por padrão gera artefatos; com a opção **Criar release rascunho**, prepara um rascunho para uma versão inédita. Releases existentes não são sobrescritas.
 
-Os testes Java, React/TypeScript e de navegador são executados no GitHub a cada push na main e em pull requests. Não é necessário executá-los neste computador. Os relatórios ficam na execução do Actions.
+Geração de instalador, commits, envio ao GitHub e publicação são realizados somente quando solicitados. Alterações comuns ficam nos arquivos locais. Consulte [o processo do GitHub Actions](docs/github-actions.md), [a proteção das atualizações](docs/atualizacoes.md) e [o template do instalador](desktop/src-tauri/installer/README.md).
 
-Para distribuir uma nova versão, atualize os metadados e notas, envie o código e a tag vX.Y.Z. O workflow testa, compila e assina o instalador Windows, verifica a assinatura e publica os quatro arquivos da atualização no GitHub Releases. O script local de publicação foi removido. A execução manual pode gerar apenas artefatos ou, para versão inédita, um rascunho de release.
+## Testes automatizados
 
-Consulte [a configuração, os Secrets e o processo de release](docs/github-actions.md) e acompanhe [as execuções no GitHub](https://github.com/Roger-dev-eng/Credit_bank/actions). Os scripts de build permanecem como ferramentas internas do runner e para desenvolvimento opcional.
+Os testes são executados automaticamente no [GitHub Actions](https://github.com/Roger-dev-eng/Credit_bank/actions) a cada push na `main` e em pull requests. O fluxo de publicação também depende dessa validação.
 
-## Limites da versão
+A suíte Java cobre cálculos, operações financeiras, persistência e proteção de dados. Os testes de navegador utilizam Playwright e Edge para verificar os fluxos de clientes, contratos, pagamentos, backups, cache e atualização da interface. O pipeline também compila React e TypeScript; o fluxo de distribuição verifica a assinatura e o runtime Java incluído.
 
-- Não há edição/exclusão de contratos ou exclusão física de lançamentos financeiros. Correções de recebimentos utilizam estorno justificado, começando pelo mais recente da parcela.
-- Antecipação de só juros altera o planejamento, sem registrar pagamento. O principal é recebido em operação separada.
-- A restauração aceita backups desta versão do esquema com checksums Flyway compatíveis. Faça backup antes de atualizar versões futuras.
-- Não há assinatura digital do instalador configurada. Validação em uma máquina Windows limpa/VM e testes de instalação/desinstalação nesse ambiente continuam necessários antes de distribuição ampla.
-- Testes de navegador verificam os fluxos financeiros; a abertura nativa verifica IPC e ciclo do processo. Não foi realizada uma auditoria independente financeira ou de segurança.
+Os testes trabalham com bancos isolados no runner. Os relatórios ficam nos artefatos das execuções. Não é necessário executar a suíte neste computador para o fluxo normal do projeto.
 
-O canal de atualização consulta GitHub Releases por HTTPS e baixa somente pacotes assinados. Clientes, contratos, pagamentos e backups permanecem locais. A troca completa de versão via instalador ainda deve ser validada em Windows limpo/VM antes de distribuição ampla.
+## Privacidade e limites
+
+- Clientes, contratos, pagamentos e backups permanecem no computador. A consulta de atualizações não envia esses registros ao GitHub.
+- A API escuta apenas em loopback e utiliza uma credencial aleatória por execução, mantida fora do bundle JavaScript.
+- O cache das listas fica no perfil local do WebView e não substitui o banco nem um backup exportado.
+- Não há edição ou exclusão de contratos nem exclusão física de lançamentos financeiros. Correções de recebimentos utilizam estorno justificado, começando pelo mais recente da parcela.
+- A restauração aceita backups com estrutura e checksums de migração compatíveis. Antes de substituir os dados, o sistema preserva uma cópia de segurança.
+- As assinaturas do atualizador não substituem um certificado Authenticode. O instalador não possui assinatura digital de publicador do Windows configurada.
+- A validação da instalação, desinstalação e troca completa de versões em Windows limpo continua necessária antes de distribuição ampla. Não foi realizada uma auditoria independente financeira ou de segurança.
+
+## Tecnologias utilizadas
+
+| Tecnologia | Função |
+| --- | --- |
+| **Java 21 e Spring Boot** | API local, validações e regras financeiras |
+| **Spring Data JPA, Hibernate e JdbcTemplate** | Cadastro, consultas e transações no banco |
+| **SQLite e Flyway** | Persistência local e migrações do esquema |
+| **Apache PDFBox** | Geração de extratos em PDF |
+| **Springdoc OpenAPI** | Documentação da API |
+| **React e TypeScript** | Interface e tipagem do frontend |
+| **Vite e Tailwind CSS** | Desenvolvimento, build e estilos |
+| **Radix UI e componentes baseados em shadcn/ui** | Elementos de interface organizados com Atomic Design |
+| **React Router e TanStack Query** | Navegação, consultas e cache |
+| **React Hook Form e Zod** | Formulários e validação de dados |
+| **Tauri 2 e Rust** | Host desktop, comunicação IPC e atualização |
+| **jlink e WebView2** | Runtimes incluídos na distribuição Windows |
+| **NSIS e LZMA** | Instalação e compactação do pacote |
+| **JUnit, Spring Boot Test e Playwright** | Testes automatizados de backend e interface |
+| **GitHub Actions e Releases** | Validação e distribuição das versões |
+
+## Documentação complementar
+
+- [Análise do protótipo e regras financeiras](docs/analise-prototipo.md)
+- [Arquitetura, segurança e API](docs/arquitetura.md)
+- [Organização com Atomic Design](docs/atomic-design.md)
+- [Cache das listas](docs/cache.md)
+- [Atualizações e preservação do banco](docs/atualizacoes.md)
+- [GitHub Actions e publicação](docs/github-actions.md)
+- [Template e compactação do instalador](desktop/src-tauri/installer/README.md)
+- [Notas das versões](docs/releases/)
+
+## Licença
+
+O código deste projeto utiliza a [licença MIT](LICENSE). As bibliotecas e os runtimes utilizados possuem suas próprias licenças.
